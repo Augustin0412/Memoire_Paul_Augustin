@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="d3.v7.min.js"></script>
+    <title>exo1</title>
+</head>
+<body>
+    <svg id="vis" width="500" height="500" style="border: 1px solid black"></svg>
+    <script>
+        var w = 500;//largeur du svg
+        var h = 500; //hateur du svg
+        var r = Math.min(w,h)/2; //rayon
+        var svg = d3.select("#vis"); //objet svg
+        var g = svg.append('g').attr('transform', 'translate(' + w/2 + ',' + h/2 + ')');//centrage de la figure
+        var color = d3.scaleOrdinal(d3.schemeCategory10);//fonction couleur de d3
+        
+
+        d3.json("books.json").then(function(graph) { //chargement du fichier json
+            var partition = d3.partition().size([2 * Math.PI, r]);
+            var root = d3.hierarchy(graph).sum(function (d) { return d.income});
+            partition(root);
+
+            //création des arcs correspondant aux données
+            var arc = d3.arc()
+                .startAngle(function (d) { return d.x0 })
+                .endAngle(function (d) { return d.x1 })
+                .innerRadius(function (d) { return d.y0 })
+                .outerRadius(function (d) { return d.y1 });
+
+            //créer un chemin (path) pour chaque arc
+            var arcs = g.selectAll('.arcs')
+                .data(root.descendants())
+                .enter().append('path')//création des paths
+                .attr("d", arc)
+                .attr("stroke", "white") // bordure blanche
+                .attr("fill", function(d) { return color(d.data.class); })//la couleur est en fonction de la class
+                .append("title").text(function(d){ return d.data.class; });//INFOBULLE
+
+            //mise en place du zoom
+            var z = d3.zoom();
+            z.on("zoom", function({transform}){
+                g.attr("transform", transform);
+            });
+            svg.call(z);
+        });
+    </script>
+
+
+</body>
+</html>
